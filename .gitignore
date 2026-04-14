@@ -1,0 +1,13 @@
+# Virtual environment
+env/
+
+# Django
+*.pyc
+__pycache__/
+db.sqlite3
+*.log
+
+.env
+
+# OS
+.DS_Store
