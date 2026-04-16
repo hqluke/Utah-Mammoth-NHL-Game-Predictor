@@ -79,17 +79,85 @@ def prev_five_games(team_abbrev):
     games = response.json()["games"]
     # get most recent games first
     games.reverse()
-    games_list = []
+    game_map = {}
     for game in games:
         if game["gameDate"] < TODAY:
-            games_list.append(game["id"])
-            if len(games_list) == 5:
-                return games_list
+            game_map[game["gameDate"]] = game["id"]
+            if len(game_map) == 5:
+                return game_map
     return {}
 
 
-# def get_stats_from_game(gameId):
-# url = f"https://api-web.nhle.com/v1/gamecenter/{gameId}/boxscore"
+def get_stats_from_game(game_id, team_abbrev):
+    output = {}
+    url = f"https://api-web.nhle.com/v1/gamecenter/{game_id}/boxscore"
+    response = requests.get(url)
+    team_one = response.json()["homeTeam"]
+    if team_one["abbrev"] != team_abbrev:
+        team_we_check = "awayTeam"
+        other_team = "homeTeam"
+    else:
+        team_we_check = "homeTeam"
+        other_team = "awayTeam"
+    goalies = response.json()["playerByGameStats"][team_we_check]["goalies"]
+    for goalie in goalies:
+        if goalie["saves"] > 0:
+            if goalie["decision"]:
+                output["decision"] = goalie["decision"]
+            output["shots_against"] = goalie["shotsAgainst"] + output.get("shots_against", 0)
+            output["saves"] = goalie["saves"] + output.get("saves", 0)
+            output["goals_allowed"] = goalie["goalsAgainst"] + output.get("goals_scored", 0)
+            output["save_pctg"] = output["saves"] / output["shots_against"]
+            output["power_play_goals_against"] = goalie["powerPlayGoalsAgainst"] + output.get("power_play_goals_against", 0)
+            output["shorthanded_goals_against"] = goalie["shorthandedGoalsAgainst"] + output.get("shorthanded_goals_against", 0)
+            output["even_strength_goals_against"] = goalie["evenStrengthGoalsAgainst"] + output.get("even_strength_goals_against", 0)
+
+    goalies = response.json()["playerByGameStats"][other_team]["goalies"]
+    for goalie in goalies:
+        if goalie["saves"] > 0:
+            output["goals_scored"] = goalie["goalsAgainst"] + output.get("goals_scored", 0)
+            output["shots_on_goal"] = goalie["shotsAgainst"] + output.get("shots_attempted", 0)
+            output["shots_missed"] = goalie["saves"] + output.get("shots_missed", 0)
+            output["shooting_pctg"] = output["goals_scored"] / output["shots_on_goal"]
+            output["power_play_goals_scored"] = goalie["powerPlayGoalsAgainst"] + output.get("power_play_goals_scored", 0)
+            output["shorthanded_goals_scored"] = goalie["shorthandedGoalsAgainst"] + output.get("shorthanded_goals_scored", 0)
+            output["even_strength_goals_scored"] = goalie["evenStrengthGoalsAgainst"] + output.get("even_strength_goals_scored", 0)
+
+    faceoffs = []
+    forwards = response.json()["playerByGameStats"][team_we_check]["forwards"]
+    defense = response.json()["playerByGameStats"][team_we_check]["defense"]
+    positions = [defense, forwards]
+    for position in positions:
+        for player in position:
+            if player["giveaways"] > 0:
+                output["giveaways"] = player["giveaways"] + output.get("giveaways", 0)
+            if player["takeaways"] > 0:
+                output["takeaways"] = player["takeaways"] + output.get("takeaways", 0)
+            if player["faceoffWinningPctg"] > 0:
+                faceoffs.append(player["faceoffWinningPctg"])
+            if player["hits"] > 0:
+                output["hits"] = player["hits"] + output.get("hits", 0)
+            if player["pim"] > 0:
+                output["penalty_minutes"] = player["pim"] + output.get("penalty_minutes", 0)
+
+    output["face_off_win_pctg"] = sum(faceoffs) / len(faceoffs)
+    output["face_off_win_pctg"] = round(output["face_off_win_pctg"], 3)
+    return output
+
+
+
+
+# future links:
+#  shows power play, penalty kill, all zone minutes, and shot differential
+#  details/teamId/season/game-type  (game-type =1 for preseason, 2 for regular season, 3 for playoffs,)
+# "https://api-web.nhle.com/v1/edge/team-zone-time-details/68/20252026/2" 
+#
+# Retrieve NHL Edge data for the specified player, Includes skating distance and speed data, shot location and speed data, zone time details and zone starts.
+# comparison/playerId/season/game-type
+# (would have to call this for all the players on the team per game) would def get rate limited
+# maybe would work if i started saving this in a database for each playerId. when I calc a new game, I would only calc the previous games that weren't in the database
+# theres no way i don't get rate limited initally setting this up. im gonna leave this for now
+# "https://api-web.nhle.com/v1/edge/skater-comparison/8482116/20242025/2"
 
 
 # eventually populate with data that's being used in the main function
@@ -125,4 +193,21 @@ if __name__ == "__main__":
 
     utah_prev_five_games = prev_five_games(utah_abbreviation)
     opponent_prev_five_games = prev_five_games(opponent_abbreviation)
-    print(json.dumps([utah_prev_five_games, opponent_prev_five_games], indent=2))
+    # print(json.dumps([utah_prev_five_games], indent=2))
+    
+    # first_game = list(utah_prev_five_games.values())[0]
+    # utah_stats = get_stats_from_game(first_game, utah_abbreviation)
+    # print(json.dumps(utah_stats, indent=2))
+
+    utah_game_output = {}
+    for k,v in utah_prev_five_games.items():
+        utah_game_output[k] = get_stats_from_game(v, utah_abbreviation)
+
+    opponent_game_output = {}
+    for k,v in opponent_prev_five_games.items():
+        opponent_game_output[k] = get_stats_from_game(v, opponent_abbreviation)
+
+    print("UTAH")
+    print(json.dumps(utah_game_output, indent=2))
+    print(opponent_abbreviation)
+    print(json.dumps(opponent_game_output, indent=2))
