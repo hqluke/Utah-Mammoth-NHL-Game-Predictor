@@ -3,8 +3,20 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 # get current date formatted as YYYY-MM-DD
-TODAY = datetime.now().strftime("%Y-%m-%d")
-CURRENT_YEAR = datetime.now().year
+NOW = datetime.now()
+TODAY = NOW.strftime("%Y-%m-%d")
+CURRENT_YEAR = NOW.year
+SWITCH_MONTH = datetime(NOW.year, 9, 1)
+
+if NOW >= SWITCH_MONTH:
+    OTHER_YEAR = CURRENT_YEAR + 1
+else:
+    OTHER_YEAR = CURRENT_YEAR - 1
+
+if CURRENT_YEAR <= OTHER_YEAR:
+    CURRENT_SEASON = str(CURRENT_YEAR) + str(OTHER_YEAR)
+else:
+    CURRENT_SEASON = str(OTHER_YEAR) + str(CURRENT_YEAR)
 
 
 def get_next_game():
@@ -60,6 +72,26 @@ def get_injured_players(team_abbrev):
     return {"total": total_injured, "players": injuries}
 
 
+def prev_five_games(team_abbrev):
+    # example url: "https://api-web.nhle.com/v1/club-schedule-season/UTA/20252026"
+    url = f"https://api-web.nhle.com/v1/club-schedule-season/{team_abbrev}/{CURRENT_SEASON}"
+    response = requests.get(url)
+    games = response.json()["games"]
+    # get most recent games first
+    games.reverse()
+    games_list = []
+    for game in games:
+        if game["gameDate"] < TODAY:
+            games_list.append(game["id"])
+            if len(games_list) == 5:
+                return games_list
+    return {}
+
+
+# def get_stats_from_game(gameId):
+# url = f"https://api-web.nhle.com/v1/gamecenter/{gameId}/boxscore"
+
+
 # eventually populate with data that's being used in the main function
 def get_all_info():
     game = get_next_game()
@@ -87,6 +119,10 @@ if __name__ == "__main__":
     # print(f"UTAH: {utah_abbreviation}")
     # print(json.dumps([utahAbbreviation, opponentAbbreviation], indent=2))
 
-    utah_injured_players = get_injured_players(utah_abbreviation)
-    opponent_injured_players = get_injured_players(opponent_abbreviation)
-    print(json.dumps([utah_injured_players, opponent_injured_players], indent=2))
+    # utah_injured_players = get_injured_players(utah_abbreviation)
+    # opponent_injured_players = get_injured_players(opponent_abbreviation)
+    # print(json.dumps([utah_injured_players, opponent_injured_players], indent=2))
+
+    utah_prev_five_games = prev_five_games(utah_abbreviation)
+    opponent_prev_five_games = prev_five_games(opponent_abbreviation)
+    print(json.dumps([utah_prev_five_games, opponent_prev_five_games], indent=2))
