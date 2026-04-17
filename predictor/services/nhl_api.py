@@ -3,6 +3,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 # get current date formatted as YYYY-MM-DD
+GAME_TYPE = 2  # regular season  TODO: add logic to update later
 NOW = datetime.now()
 TODAY = NOW.strftime("%Y-%m-%d")
 CURRENT_YEAR = NOW.year
@@ -97,11 +98,15 @@ def get_stats_from_game(game_id, team_abbrev):
     if team_one["abbrev"] != team_abbrev:
         team_we_check = "awayTeam"
         output["opponent_abbrev"] = team_one["abbrev"]
+        output["total_goals_scored"] = team_one["score"]
+        output["total_goals_allowed"] = team_two["score"]
         other_team = "homeTeam"
     else:
         team_we_check = "homeTeam"
         other_team = "awayTeam"
         output["opponent_abbrev"] = team_two["abbrev"]
+        output["total_goals_scored"] = team_two["score"]
+        output["total_goals_allowed"] = team_one["score"]
     goalies = response.json()["playerByGameStats"][team_we_check]["goalies"]
     for goalie in goalies:
         if goalie["saves"] > 0:
@@ -112,7 +117,7 @@ def get_stats_from_game(game_id, team_abbrev):
             )
             output["saves"] = goalie["saves"] + output.get("saves", 0)
             output["goals_allowed"] = goalie["goalsAgainst"] + output.get(
-                "goals_scored", 0
+                "goals_allowed", 0
             )
             output["save_pctg"] = output["saves"] / output["shots_against"]
             output["power_play_goals_against"] = goalie[
@@ -177,11 +182,36 @@ def get_stats_from_game(game_id, team_abbrev):
     return output
 
 
-# future links:
 #  shows power play, penalty kill, all zone minutes, and shot differential
 #  details/teamId/season/game-type  (game-type =1 for preseason, 2 for regular season, 3 for playoffs,)
-# "https://api-web.nhle.com/v1/edge/team-zone-time-details/68/20252026/2"
-#
+def get_zone_stats(team_id, season=CURRENT_SEASON, game_type=GAME_TYPE):
+    url = f"https://api-web.nhle.com/v1/edge/team-zone-time-details/{team_id}/{season}/{game_type}"
+    response = requests.get(url)
+    stats = response.json()["zoneTimeDetails"]
+    return stats
+
+
+def normalize(value, min_val, max_val):
+    if max_val == min_val:
+        return 0.5
+    return (value - min_val) / (max_val - min_val)
+
+
+def weigh_game(game_stats):
+    score = 0
+    score += normalize(game_stats["save_pctg"], 0.85, 0.96) * 0.20
+    score += normalize(game_stats["shooting_pctg"], 0.05, 0.20) * 0.10
+    score += normalize(game_stats["total_goals_scored"], 0, 7) * 0.20
+    score += normalize(game_stats["total_goals_allowed"], 0, 7) * -0.15
+    score += normalize(game_stats["face_off_win_pctg"], 0.35, 0.65) * 0.10
+    score += (
+        normalize(game_stats["takeaways"] - game_stats["giveaways"], -15, 15) * 0.10
+    )
+    score += (1 if game_stats["decision"] == "W" else 0) * 0.15
+    return score
+
+
+# future links:
 # Retrieve NHL Edge data for the specified player, Includes skating distance and speed data, shot location and speed data, zone time details and zone starts.
 # comparison/playerId/season/game-type
 # (would have to call this for all the players on the team per game) would def get rate limited
@@ -214,6 +244,9 @@ if __name__ == "__main__":
 
     utah_abbreviation = utah["abbrev"]
     opponent_abbreviation = opponent["abbrev"]
+    utah_id = utah["id"]
+    opponent_id = opponent["id"]
+    # print(f"OPPONENT ID: {opponent_id}")
     # print(f"UTAH: {utah_abbreviation}")
     # print(json.dumps([utahAbbreviation, opponentAbbreviation], indent=2))
 
@@ -223,7 +256,7 @@ if __name__ == "__main__":
 
     utah_prev_five_games = prev_five_games(utah_abbreviation)
     opponent_prev_five_games = prev_five_games(opponent_abbreviation)
-    # print(json.dumps([utah_prev_five_games], indent=2))
+    print(json.dumps([utah_prev_five_games], indent=2))
 
     # first_game = list(utah_prev_five_games.values())[0]
     # utah_stats = get_stats_from_game(first_game, utah_abbreviation)
@@ -233,11 +266,21 @@ if __name__ == "__main__":
     for k, v in utah_prev_five_games.items():
         utah_game_output[k] = get_stats_from_game(v, utah_abbreviation)
 
-    opponent_game_output = {}
-    for k, v in opponent_prev_five_games.items():
-        opponent_game_output[k] = get_stats_from_game(v, opponent_abbreviation)
+    # opponent_game_output = {}
+    # for k, v in opponent_prev_five_games.items():
+    #     opponent_game_output[k] = get_stats_from_game(v, opponent_abbreviation)
 
     print("UTAH")
     print(json.dumps(utah_game_output, indent=2))
-    print(opponent_abbreviation)
-    print(json.dumps(opponent_game_output, indent=2))
+    # print(opponent_abbreviation)
+    # print(json.dumps(opponent_game_output, indent=2))
+
+    utah_zone = get_zone_stats(utah_id)
+    opponent_zone = get_zone_stats(opponent_id)
+    # print(json.dumps(utah_zone, indent=2))
+    # print(json.dumps(opponent_zone, indent=2))
+
+    utah_weighted_scores = []
+    for k, v in utah_game_output.items():
+        utah_weighted_scores.append(weigh_game(v))
+    print(utah_weighted_scores)
