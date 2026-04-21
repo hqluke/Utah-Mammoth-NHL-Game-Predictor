@@ -73,7 +73,7 @@ def get_injured_players(team_abbrev):
     return {"total": total_injured, "players": injuries}
 
 
-def prev_five_games(team_abbrev):
+def prev_games(team_abbrev, length=8):
     # example url: "https://api-web.nhle.com/v1/club-schedule-season/UTA/20252026"
     url = f"https://api-web.nhle.com/v1/club-schedule-season/{team_abbrev}/{CURRENT_SEASON}"
     response = requests.get(url)
@@ -84,7 +84,7 @@ def prev_five_games(team_abbrev):
     for game in games:
         if game["gameDate"] < TODAY:
             game_map[game["gameDate"]] = game["id"]
-            if len(game_map) == 5:
+            if len(game_map) == length:
                 return game_map
     return {}
 
@@ -110,7 +110,7 @@ def get_stats_from_game(game_id, team_abbrev):
     goalies = response.json()["playerByGameStats"][team_we_check]["goalies"]
     for goalie in goalies:
         if goalie["saves"] > 0:
-            if goalie["decision"]:
+            if goalie.get("decision"):
                 output["decision"] = goalie["decision"]
             output["shots_against"] = goalie["shotsAgainst"] + output.get(
                 "shots_against", 0
@@ -191,26 +191,6 @@ def get_zone_stats(team_id, season=CURRENT_SEASON, game_type=GAME_TYPE):
     return stats
 
 
-def normalize(value, min_val, max_val):
-    if max_val == min_val:
-        return 0.5
-    return (value - min_val) / (max_val - min_val)
-
-
-def weigh_game(game_stats):
-    score = 0
-    score += normalize(game_stats["save_pctg"], 0.85, 0.96) * 0.20
-    score += normalize(game_stats["shooting_pctg"], 0.05, 0.20) * 0.10
-    score += normalize(game_stats["total_goals_scored"], 0, 7) * 0.20
-    score += normalize(game_stats["total_goals_allowed"], 0, 7) * -0.15
-    score += normalize(game_stats["face_off_win_pctg"], 0.35, 0.65) * 0.10
-    score += (
-        normalize(game_stats["takeaways"] - game_stats["giveaways"], -15, 15) * 0.10
-    )
-    score += (1 if game_stats["decision"] == "W" else 0) * 0.15
-    return score
-
-
 # future links:
 # Retrieve NHL Edge data for the specified player, Includes skating distance and speed data, shot location and speed data, zone time details and zone starts.
 # comparison/playerId/season/game-type
@@ -222,18 +202,91 @@ def weigh_game(game_stats):
 
 # eventually populate with data that's being used in the main function
 def get_all_info():
+    from predictor.services import odds_calculator
+
     game = get_next_game()
     utah, opponent = get_next_teams(game)
-    utahAbbreviation = utah["abbrev"]
-    opponentAbbreviation = opponent["abbrev"]
-    utahInjuredPlayers = get_injured_players(utahAbbreviation)
-    opponentInjuredPlayers = get_injured_players(opponentAbbreviation)
+
+    utah_abbreviation = utah["abbrev"]
+    opponent_abbreviation = opponent["abbrev"]
+    utah_id = utah["id"]
+    opponent_id = opponent["id"]
+    utah_is_home = game["homeTeam"]["id"] == 68
+
+    utah_prev = prev_games(utah_abbreviation)
+    opponent_prev = prev_games(opponent_abbreviation)
+
+    utah_game_output = {
+        k: get_stats_from_game(v, utah_abbreviation) for k, v in utah_prev.items()
+    }
+    opponent_game_output = {
+        k: get_stats_from_game(v, opponent_abbreviation)
+        for k, v in opponent_prev.items()
+    }
+
+    utah_zone = get_zone_stats(utah_id)
+    opponent_zone = get_zone_stats(opponent_id)
+
+    utah_injured = get_injured_players(utah_abbreviation)
+    opponent_injured = get_injured_players(opponent_abbreviation)
+
+    utah_win_rate = sum(
+        1 for v in utah_game_output.values() if v.get("decision") == "W"
+    ) / len(utah_game_output)
+    opponent_win_rate = sum(
+        1 for v in opponent_game_output.values() if v.get("decision") == "W"
+    ) / len(opponent_game_output)
+
+    utah_scores = [odds_calculator.weigh_game(v) for v in utah_game_output.values()]
+    opponent_scores = [
+        odds_calculator.weigh_game(v) for v in opponent_game_output.values()
+    ]
+
+    utah_avg = odds_calculator.average_weighted_score(utah_scores)
+    opponent_avg = odds_calculator.average_weighted_score(opponent_scores)
+
+    utah_blended = odds_calculator.blend_zone_time(utah_avg, utah_zone)
+    opponent_blended = odds_calculator.blend_zone_time(opponent_avg, opponent_zone)
+
+    utah_win_probability = odds_calculator.calculate_win_probability(
+        utah_blended, opponent_blended, utah_is_home, utah_win_rate, opponent_win_rate
+    )
+
+    return {
+        "game": game,
+        "utah": utah,
+        "opponent": opponent,
+        "utah_is_home": utah_is_home,
+        "utah_win_probability": utah_win_probability,
+        "utah_game_output": utah_game_output,
+        "opponent_game_output": opponent_game_output,
+        "utah_injured": utah_injured,
+        "opponent_injured": opponent_injured,
+        "utah_zone": utah_zone,
+        "opponent_zone": opponent_zone,
+    }
 
 
 # print info as needed
 # call python predictor/services/nhl_api.py
 if __name__ == "__main__":
+    import sys
+    import os
+
+    sys.path.insert(
+        0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    )
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mammothOdds.settings")
+    import django
+
+    django.setup()
     import json
+    from predictor.services.odds_calculator import (
+        weigh_game,
+        average_weighted_score,
+        blend_zone_time,
+        calculate_win_probability,
+    )
 
     # game = get_next_game()
     # print(json.dumps(game, indent=2))
@@ -254,33 +307,73 @@ if __name__ == "__main__":
     # opponent_injured_players = get_injured_players(opponent_abbreviation)
     # print(json.dumps([utah_injured_players, opponent_injured_players], indent=2))
 
-    utah_prev_five_games = prev_five_games(utah_abbreviation)
-    opponent_prev_five_games = prev_five_games(opponent_abbreviation)
-    print(json.dumps([utah_prev_five_games], indent=2))
+    utah_prev_games = prev_games(utah_abbreviation)
+    opponent_prev_games = prev_games(opponent_abbreviation)
+    print(json.dumps([utah_prev_games], indent=2))
 
     # first_game = list(utah_prev_five_games.values())[0]
     # utah_stats = get_stats_from_game(first_game, utah_abbreviation)
     # print(json.dumps(utah_stats, indent=2))
 
     utah_game_output = {}
-    for k, v in utah_prev_five_games.items():
+    for k, v in utah_prev_games.items():
         utah_game_output[k] = get_stats_from_game(v, utah_abbreviation)
 
-    # opponent_game_output = {}
-    # for k, v in opponent_prev_five_games.items():
-    #     opponent_game_output[k] = get_stats_from_game(v, opponent_abbreviation)
+    opponent_game_output = {}
+    for k, v in opponent_prev_games.items():
+        opponent_game_output[k] = get_stats_from_game(v, opponent_abbreviation)
 
-    print("UTAH")
+    # print("UTAH")
     print(json.dumps(utah_game_output, indent=2))
     # print(opponent_abbreviation)
-    # print(json.dumps(opponent_game_output, indent=2))
+    print(json.dumps(opponent_game_output, indent=2))
 
     utah_zone = get_zone_stats(utah_id)
     opponent_zone = get_zone_stats(opponent_id)
-    # print(json.dumps(utah_zone, indent=2))
-    # print(json.dumps(opponent_zone, indent=2))
+    print(json.dumps(utah_zone, indent=2))
+    print(json.dumps(opponent_zone, indent=2))
 
     utah_weighted_scores = []
     for k, v in utah_game_output.items():
         utah_weighted_scores.append(weigh_game(v))
     print(utah_weighted_scores)
+
+    opponent_weighted_scores = []
+    for k, v in opponent_game_output.items():
+        opponent_weighted_scores.append(weigh_game(v))
+    print(opponent_weighted_scores)
+
+    utah_average_weighted_score = average_weighted_score(utah_weighted_scores)
+    print(utah_average_weighted_score)
+
+    opponent_average_weighted_score = average_weighted_score(opponent_weighted_scores)
+    print(opponent_average_weighted_score)
+
+    utah_blended_zone_time = blend_zone_time(utah_average_weighted_score, utah_zone)
+    print(utah_blended_zone_time)
+
+    opponent_blended_zone_time = blend_zone_time(
+        opponent_average_weighted_score, opponent_zone
+    )
+    print(opponent_blended_zone_time)
+
+    utah_is_home = game["homeTeam"]["id"] == 68
+
+    utah_win_rate = sum(
+        1 for v in utah_game_output.values() if v.get("decision") == "W"
+    ) / len(utah_game_output)
+    opponent_win_rate = sum(
+        1 for v in opponent_game_output.values() if v.get("decision") == "W"
+    ) / len(opponent_game_output)
+
+    utah_final_probability = calculate_win_probability(
+        utah_blended_zone_time,
+        opponent_blended_zone_time,
+        utah_is_home,
+        utah_win_rate,
+        opponent_win_rate,
+    )
+    print(
+        f"Utah win rate: {utah_win_rate:.3f}, Opponent win rate: {opponent_win_rate:.3f}"
+    )
+    print(utah_final_probability * 100)
