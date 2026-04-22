@@ -3,7 +3,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 # get current date formatted as YYYY-MM-DD
-GAME_TYPE = 2  # regular season  TODO: add logic to update later
+GAME_TYPE = 3  # regular season = 2, playoffs = 3
 NOW = datetime.now()
 TODAY = NOW.strftime("%Y-%m-%d")
 CURRENT_YEAR = NOW.year
@@ -176,6 +176,10 @@ def get_stats_from_game(game_id, team_abbrev):
         for player in position:
             if player["hits"] > 0:
                 output["hits_taken"] = player["hits"] + output.get("hits_taken", 0)
+            if player["pim"] > 0:
+                output["opponent_penalty_minutes"] = player["pim"] + output.get(
+                    "opponent_penalty_minutes", 0
+                )
 
     output["face_off_win_pctg"] = sum(faceoffs) / len(faceoffs)
     output["face_off_win_pctg"] = round(output["face_off_win_pctg"], 3)

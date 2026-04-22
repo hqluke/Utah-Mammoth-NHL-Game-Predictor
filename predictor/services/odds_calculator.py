@@ -9,19 +9,40 @@ def normalize(value, min_val, max_val):
 
 def weigh_game(game_stats):
     score = 0
-    score += normalize(game_stats["save_pctg"], 0.85, 0.96) * 0.20
-    score += normalize(game_stats["shooting_pctg"], 0.05, 0.20) * 0.10
-    score += normalize(game_stats["total_goals_scored"], 0, 7) * 0.20
-    score += normalize(game_stats["total_goals_allowed"], 0, 7) * -0.15
-    score += normalize(game_stats["face_off_win_pctg"], 0.35, 0.65) * 0.08
-    score += (
-        normalize(game_stats["takeaways"] - game_stats["giveaways"], -15, 15) * 0.07
+
+    # goaltending and shooting (50%)
+    score += normalize(game_stats["save_pctg"], 0.85, 0.96) * 0.25
+    score += normalize(game_stats["shooting_pctg"], 0.05, 0.20) * 0.25
+
+    # special teams (25%)
+    pp_diff = game_stats.get("power_play_goals_scored", 0) - game_stats.get(
+        "power_play_goals_against", 0
     )
-    score += (1 if game_stats["decision"] == "W" else 0) * 0.20
+    sh_diff = game_stats.get("shorthanded_goals_scored", 0) - game_stats.get(
+        "shorthanded_goals_against", 0
+    )
+    score += normalize(pp_diff, -3, 3) * 0.125
+    score += normalize(sh_diff, -2, 2) * 0.125
+
+    # discipline (7%)
+    pim_diff = game_stats.get("penalty_minutes", 0) - game_stats.get(
+        "opponent_penalty_minutes", 0
+    )
+    score += normalize(pim_diff, -20, 20) * -0.07  # more PIM is bad
+
+    # possession proxies (15%)
+    score += normalize(game_stats["face_off_win_pctg"], 0.35, 0.65) * 0.08
+    takeaway_diff = game_stats.get("takeaways", 0) - game_stats.get("giveaways", 0)
+    score += normalize(takeaway_diff, -15, 15) * 0.07
+
+    # physicality (3%)
+    hit_diff = game_stats.get("hits", 0) - game_stats.get("hits_taken", 0)
+    score += normalize(hit_diff, -20, 20) * 0.03
+
     return score
 
 
-RECENCY_WEIGHTS = [0.15, 0.15, 0.15, 0.15, 0.15, 0.12, 0.07, 0.06]
+RECENCY_WEIGHTS = [0.25, 0.20, 0.15, 0.13, 0.10, 0.08, 0.05, 0.04]
 
 
 def average_weighted_score(game_scores):
