@@ -8,6 +8,7 @@ NOW = datetime.now()
 TODAY = NOW.strftime("%Y-%m-%d")
 CURRENT_YEAR = NOW.year
 SWITCH_MONTH = datetime(NOW.year, 9, 1)
+NUM_GAMES = 8
 
 if NOW >= SWITCH_MONTH:
     OTHER_YEAR = CURRENT_YEAR + 1
@@ -73,7 +74,7 @@ def get_injured_players(team_abbrev):
     return {"total": total_injured, "players": injuries}
 
 
-def prev_games(team_abbrev, length=8):
+def prev_games(team_abbrev, length=NUM_GAMES):
     # example url: "https://api-web.nhle.com/v1/club-schedule-season/UTA/20252026"
     url = f"https://api-web.nhle.com/v1/club-schedule-season/{team_abbrev}/{CURRENT_SEASON}"
     response = requests.get(url)
@@ -228,6 +229,15 @@ def get_all_info():
         for k, v in opponent_prev.items()
     }
 
+    utah_average_score = sum(v["goals_scored"] for v in utah_game_output.values()) / len(
+        utah_game_output
+    )
+    opponent_average_score = sum(
+        v["goals_scored"] for v in opponent_game_output.values()
+    ) / len(opponent_game_output)
+
+    predicted_score = str(utah_average_score) + "-" + str(opponent_average_score)
+
     utah_zone = get_zone_stats(utah_id)
     opponent_zone = get_zone_stats(opponent_id)
 
@@ -268,6 +278,7 @@ def get_all_info():
         "opponent_injured": opponent_injured,
         "utah_zone": utah_zone,
         "opponent_zone": opponent_zone,
+        "predicted_score": predicted_score,
     }
 
 

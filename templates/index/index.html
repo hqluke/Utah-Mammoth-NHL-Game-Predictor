@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Mammoth Odds</title>
+        <script src="https://cdn.plot.ly/plotly-2.14.0.min.js"></script>
+    </head>
+    <body>
+        <h1>Mammoth Odds</h1>
+        <p>Predicted Score: {{ predicted_score }}</p>
+        <div id="utah_goals_graph"></div>
+        <div id="opponent_goals_graph"></div>
+    </body>
+    <script>
+        var utah_data = {{ utah_goals_graph | safe }};
+        var opponent_data = {{ opponent_goals_graph | safe }};
+        Plotly.newPlot('utah_goals_graph', utah_data.data, utah_data.layout);
+        Plotly.newPlot('opponent_goals_graph', opponent_data.data, opponent_data.layout);
+    </script>
+</html>
