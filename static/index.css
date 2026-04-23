@@ -1,74 +1,307 @@
 * {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
-
 img {
     height: auto;
-    width: 150px;
+    width: 220px;
 }
-
 body {
     background-color: #1a1a2e;
     color: #e0e0e0;
+    font-size: 18px;
 }
-
 .header {
+    width: 100%;
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
-    font-size: 0.6rem;
+    font-size: 1rem;
     background-color: #444444;
     color: #e0e0e0;
     box-shadow: 0 0 10px #222222;
+    padding: 0.4rem 0;
 }
-
 .header h1 {
     margin-left: 2rem;
+    font-size: 1.1rem;
 }
-
 .title-container {
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    margin-top: 3rem;
-    margin-bottom: 1.2rem;
+    margin-top: 3.5rem;
+    margin-bottom: 1.8rem;
     width: 100%;
 }
-
 .title-container h1 {
     margin: 0 auto;
+    font-size: 2.4rem;
 }
-
 .logo-record-container {
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    width: 800px;
-    margin: 0 auto;
-    gap: 4rem;
+    width: 100%;
+    margin: 2.5rem auto 0 auto;
+    gap: 6rem;
 }
-
 .utah-top {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.6rem;
+    width: 400px;
 }
-
+.utah-top p {
+    font-size: 1.4rem;
+}
 .opponent-top {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.6rem;
+    width: 400px;
 }
-
-.top-text {
+.opponent-top p {
+    font-size: 1.4rem;
+}
+.game-start-info-container {
     display: flex;
     flex-direction: column;
-    margin-left: 10px;
+    align-items: center;
+    gap: 0.2rem;
+    width: 100%;
+    margin: 0 auto;
+}
+.top-text {
+    align-self: center;
+}
+.top-text p {
+    font-size: 2.2rem;
+}
+.game-start-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 1.4rem;
+    margin-top: 0.8rem;
+}
+.pred-container {
+    width: 800px;
+    margin: 1.4rem auto 0 auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    font-weight: 700;
     font-size: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(4px);
+}
+
+/* ── Grid: Utah left, Opponent right ── */
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem 2.5rem;
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+/* Injuries: row 1 */
+#utah_injured_players {
+    grid-column: 1;
+    grid-row: 1;
+}
+#opponent_injured_players {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.injury-update-container {
+    margin-left: 0.4rem;
+    margin-top: 1rem;
+}
+.injury-update-container h4 {
+    font-size: 1.4rem;
+    margin-bottom: 0.4rem;
+    padding-bottom: 0.2rem;
+    font-weight: 500;
+    border-bottom: 1px solid #666666;
+}
+.injury-update-container p {
+    font-size: 1.2rem;
+}
+
+/* Goals graphs: row 2 */
+#utah_goals_graph {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    min-height: 350px;
+}
+#opponent_goals_graph {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    min-height: 350px;
+}
+
+/* Performance graphs: row 3 */
+#utah_performance_graph {
+    grid-column: 1;
+    grid-row: 3;
+    width: 100%;
+    min-height: 350px;
+}
+#opponent_performance_graph {
+    grid-column: 2;
+    grid-row: 3;
+    width: 100%;
+    min-height: 350px;
+}
+
+/* Injury table text scaling */
+#utah_injured_players h2,
+#opponent_injured_players h2 {
+    font-size: 1.4rem;
+    margin-bottom: 0.6rem;
+}
+
+#utah_injured_players table,
+#opponent_injured_players table {
+    font-size: 1rem !important;
+}
+
+#utah_injured_players th,
+#opponent_injured_players th,
+#utah_injured_players td,
+#opponent_injured_players td {
+    padding: 10px 14px !important;
+}
+
+.performance-explanation {
+    max-width: 1200px;
+    margin: 1.5rem auto;
+    padding: 1.5rem 2rem;
+    color: #e0e0e0;
+    text-align: center;
+}
+
+.performance-explanation h3 {
+    font-size: 1.4rem;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+.perf-intro {
+    font-size: 1rem;
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+.perf-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.perf-category {
+    padding: 0.4rem 0.7rem;
+    height: 80px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.perf-label {
+    display: block;
+    font-size: 1rem;
+    color: #ffffff;
+}
+
+.perf-label strong {
+    color: #7ab3e2;
+}
+
+.perf-desc {
+    text-align: center;
+    display: block;
+    font-size: 0.9rem;
+    color: #ffffff;
+    margin-top: 0.15rem;
+}
+
+.perf-pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 0.9rem;
+    text-align: left;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.perf-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+}
+
+.step-num {
+    min-width: 20px;
+    height: 20px;
+    background: transparent;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 12px;
+    font-size: 1rem;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.perf-step p {
+    font-size: 1rem;
+    color: #ffffff;
+    margin: 0;
+}
+
+.site-footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #555;
+    padding: 1.5rem 0;
+    margin-top: 2rem;
+}
+
+.site-footer a {
+    color: #666;
+    text-decoration: none;
+}
+
+.site-footer a:hover {
+    color: #aaa;
 }

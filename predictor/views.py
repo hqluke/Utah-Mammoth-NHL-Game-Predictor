@@ -128,11 +128,16 @@ def _store_prediction(game_id, data):
         },
     )
 
+    predicted_home_score = float(data["predicted_score"].split("-")[0])
+    predicted_away_score = float(data["predicted_score"].split("-")[1])
+
     GamePrediction.objects.update_or_create(
         game=game_obj,
         defaults={
             "utah_win_pct": data["utah_win_probability"],
             "cached_data": data,
+            "predicted_home_score": predicted_home_score,
+            "predicted_away_score": predicted_away_score,
         },
     )
 

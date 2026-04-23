@@ -135,15 +135,15 @@ def get_stats_from_game(game_id, team_abbrev):
     if team_one["abbrev"] != team_abbrev:
         team_we_check = "awayTeam"
         output["opponent_abbrev"] = team_one["abbrev"]
-        output["total_goals_scored"] = team_one["score"]
-        output["total_goals_allowed"] = team_two["score"]
+        output["total_goals_scored"] = team_two["score"]
+        output["total_goals_allowed"] = team_one["score"]
         other_team = "homeTeam"
     else:
         team_we_check = "homeTeam"
         other_team = "awayTeam"
         output["opponent_abbrev"] = team_two["abbrev"]
-        output["total_goals_scored"] = team_two["score"]
-        output["total_goals_allowed"] = team_one["score"]
+        output["total_goals_scored"] = team_one["score"]
+        output["total_goals_allowed"] = team_two["score"]
     goalies = response.json()["playerByGameStats"][team_we_check]["goalies"]
     for goalie in goalies:
         if goalie["saves"] > 0:
@@ -423,19 +423,28 @@ if __name__ == "__main__":
 
     utah_prev_games = prev_games(utah_abbreviation)
     opponent_prev_games = prev_games(opponent_abbreviation)
-    # print(json.dumps([utah_prev_games], indent=2))
+    print("UTAH PREV GAMES")
+    print(json.dumps([utah_prev_games], indent=2))
+    print("OPPONENT PREV GAMES")
+    print(json.dumps([opponent_prev_games], indent=2))
 
     # first_game = list(utah_prev_five_games.values())[0]
     # utah_stats = get_stats_from_game(first_game, utah_abbreviation)
     # print(json.dumps(utah_stats, indent=2))
 
+    print("UTAH GAME OUTPUT")
     utah_game_output = {}
     for k, v in utah_prev_games.items():
         utah_game_output[k] = get_stats_from_game(v, utah_abbreviation)
+        print(f"UTAH GAME OUTPUT: {k}:")
+        print(utah_game_output[k])
 
+    print("OPPONENT GAME OUTPUT")
     opponent_game_output = {}
     for k, v in opponent_prev_games.items():
         opponent_game_output[k] = get_stats_from_game(v, opponent_abbreviation)
+        print(f"OPPONENT GAME OUTPUT: {k}:")
+        print(opponent_game_output[k])
 
     # print("UTAH")
     # print(json.dumps(utah_game_output, indent=2))
@@ -447,20 +456,24 @@ if __name__ == "__main__":
     # print(json.dumps(utah_zone, indent=2))
     # print(json.dumps(opponent_zone, indent=2))
 
+    print("UTAH WEIGHTED SCORES")
     utah_weighted_scores = []
     for k, v in utah_game_output.items():
         utah_weighted_scores.append(weigh_game(v))
-    # print(utah_weighted_scores)
+    print(utah_weighted_scores)
 
+    print("OPPONENT WEIGHTED SCORES")
     opponent_weighted_scores = []
     for k, v in opponent_game_output.items():
         opponent_weighted_scores.append(weigh_game(v))
-    # print(opponent_weighted_scores)
+    print(opponent_weighted_scores)
 
     utah_average_weighted_score = average_weighted_score(utah_weighted_scores)
+    print("UTAH AVERAGE WEIGHTED SCORE")
     print(utah_average_weighted_score)
 
     opponent_average_weighted_score = average_weighted_score(opponent_weighted_scores)
+    print("OPPONENT AVERAGE WEIGHTED SCORE")
     print(opponent_average_weighted_score)
 
     utah_blended_zone_time = blend_zone_time(utah_average_weighted_score, utah_zone)

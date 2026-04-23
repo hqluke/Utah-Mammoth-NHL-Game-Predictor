@@ -13,10 +13,20 @@ def build_goals_graph(
     dates = list(data.keys())
     goals_scored = [v["total_goals_scored"] for v in data.values()]
     goals_allowed = [v["total_goals_allowed"] for v in data.values()]
+    opponents = [v["opponent_abbrev"] for v in data.values()]
+    opponents.reverse()
     goals_scored.reverse()
     goals_allowed.reverse()
     dates.reverse()
     game_numbers = list(range(1, len(dates) + 1))
+
+    def fmt(d):
+        from datetime import datetime
+
+        return datetime.strptime(d, "%Y-%m-%d").strftime("%b %-d")
+
+    tick_labels = [fmt(d) for d in dates]
+    tick_labels[-1] = f"{tick_labels[-1]} ◀ Latest"
 
     fig = go.Figure()
     fig.add_trace(
@@ -25,8 +35,8 @@ def build_goals_graph(
             y=goals_scored,
             name="Scored",
             marker_color=goal_scored_color,
-            customdata=dates,
-            hovertemplate="Date: %{customdata}<br>Goals Scored: %{y}<extra></extra>",
+            customdata=list(zip(dates, opponents)),
+            hovertemplate="Date: %{customdata[0]}<br>vs: %{customdata[1]}<br>Goals Scored: %{y}<extra></extra>",
         )
     )
     fig.add_trace(
@@ -35,18 +45,20 @@ def build_goals_graph(
             y=goals_allowed,
             name="Allowed",
             marker_color=goal_allowed_color,
-            customdata=dates,
-            hovertemplate="Date: %{customdata}<br>Goals Allowed: %{y}<extra></extra>",
+            customdata=list(zip(dates, opponents)),
+            hovertemplate="Date: %{customdata[0]}<br>vs: %{customdata[1]}<br>Goals Allowed: %{y}<extra></extra>",
         )
     )
     fig.update_layout(
-        title=f"{abbrev} Goals Scored vs. Goals Allowed in past games",
+        title=dict(
+            text=f"{abbrev} Goals Scored vs. Goals Allowed in past games", x=0.5
+        ),
         barmode="group",
         template="plotly_dark",
         xaxis=dict(
             tickmode="array",
             tickvals=game_numbers,
-            ticktext=[f"G{n}" for n in game_numbers],
+            ticktext=tick_labels,
         ),
     )
     return fig.to_json()
@@ -58,7 +70,23 @@ def build_performance_graph(data, game_ratings, abbrev, bar_color="#7ab3e2"):
     scores = [r["score"] for r in game_ratings]
     vs_avg = [r["vs_average"] for r in game_ratings]
     ratings = [r["rating"] for r in game_ratings]
+    opponents = [v["opponent_abbrev"] for v in data.values()]
+    opponents.reverse()
+    scores.reverse()
+    vs_avg.reverse()
+    ratings.reverse()
+
     game_numbers = list(range(1, len(dates) + 1))
+
+    # Short date labels e.g. "Apr 7" with "Apr 21 (Latest)" on the last
+    def fmt(d):
+        from datetime import datetime
+
+        dt = datetime.strptime(d, "%Y-%m-%d")
+        return dt.strftime("%b %-d")
+
+    tick_labels = [fmt(d) for d in dates]
+    tick_labels[-1] = f"{tick_labels[-1]} ◀ Latest"  # mark most recent
 
     colors = []
     for r in ratings:
@@ -76,9 +104,10 @@ def build_performance_graph(data, game_ratings, abbrev, bar_color="#7ab3e2"):
             y=scores,
             name="Performance Score",
             marker_color=colors,
-            customdata=list(zip(dates, vs_avg, ratings)),
+            customdata=list(zip(dates, vs_avg, ratings, opponents)),
             hovertemplate=(
                 "Date: %{customdata[0]}<br>"
+                "vs: %{customdata[3]}<br>"
                 "Score: %{y}<br>"
                 "vs Average: %{customdata[1]}%<br>"
                 "Rating: %{customdata[2]}<extra></extra>"
@@ -94,12 +123,12 @@ def build_performance_graph(data, game_ratings, abbrev, bar_color="#7ab3e2"):
         annotation_position="right",
     )
     fig.update_layout(
-        title=f"{abbrev} Game Performance Rating",
+        title=dict(text=f"{abbrev} Game Performance Rating", x=0.5),
         template="plotly_dark",
         xaxis=dict(
             tickmode="array",
             tickvals=game_numbers,
-            ticktext=[f"G{n}" for n in game_numbers],
+            ticktext=tick_labels,
         ),
         yaxis=dict(range=[0, 1]),
     )

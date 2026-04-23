@@ -13,11 +13,9 @@
         <div class="header">
             <h1>Mammoth Odds</h1>
         </div>
-        <div class="title-container">
-            <h1>{{ utah_name }} vs. {{ opponent_name }}</h1>
-        </div>
         <div class="logo-record-container">
             <div class="utah-top">
+                <h1>{{ utah_name }}</h1>
                 <img src="{{ utah_dark_logo }}" alt="{{ utah_name }} logo" />
                 <p>Utah Record: {{ utah_record }}</p>
             </div>
@@ -25,93 +23,172 @@
                 <p>VS.</p>
             </div>
             <div class="opponent-top">
+                <h1>{{ opponent_name }}</h1>
                 <img src="{{ opponent_dark_logo }}" alt="{{ opponent_name }} logo" />
-                <p>Opponent Record: {{ opponent_record }}</p>
+                <p>Opp Record: {{ opponent_record }}</p>
             </div>
         </div>
-        <p>Utah Win Probability: {{ win_probability }}%</p>
-        <p>Predicted Score: {{ predicted_score }}</p>
-        <p>Venue: {{ venue }}</p>
-        <p>Start Time: {{ start_time }}</p>
-        <p>Start Date: {{ start_date }}</p>
-        <div id="utah_injured_players" style="margin: 20px 0">
-            <h2 style="color: #7ab3e2">Utah Injuries ({{ total_utah_injured_players }})</h2>
-            {% if utah_injured_players %}
-                <table style="width: 100%;
-                              border-collapse: collapse;
-                              background: #1a1a2e;
-                              color: #e0e0e0;
-                              font-size: 0.85rem">
-                    <thead>
-                        <tr style="border-bottom: 2px solid #7ab3e2">
-                            <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Player</th>
-                            <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Date</th>
-                            <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Type</th>
-                            <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Note</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for player in utah_injured_players %}
-                            <tr style="border-bottom: 1px solid #2a2a4a">
-                                <td style="padding: 6px 12px">{{ player.player }}</td>
-                                <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryDate }}</td>
-                                <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryType }}</td>
-                                <td style="padding: 6px 12px; max-width: 300px">{{ player.injuryNote }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p style="color: #888">No current injuries</p>
-            {% endif %}
+        <div class="game-start-info-container">
+            <div class="game-start-info">
+                <p>{{ venue }} - {{ start_time }}</p>
+                <p>{{ start_date }}</p>
+            </div>
         </div>
-        <div id="opponent_injured_players" style="margin: 20px 0">
-            <h2 style="color: #de1a24">
-                {{ opponent_abbreviation }} Injuries
-                ({{ total_opponent_injured_players }})
-            </h2>
-            {% if opponent_injured_players %}
-                <table style="width: 100%;
-                              border-collapse: collapse;
-                              background: #1a1a2e;
-                              color: #e0e0e0;
-                              font-size: 0.85rem">
-                    <thead>
-                        <tr style="border-bottom: 2px solid #de1a24">
-                            <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Player</th>
-                            <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Date</th>
-                            <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Type</th>
-                            <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Note</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for player in opponent_injured_players %}
-                            <tr style="border-bottom: 1px solid #2a2a4a">
-                                <td style="padding: 6px 12px">{{ player.player }}</td>
-                                <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryDate }}</td>
-                                <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryType }}</td>
-                                <td style="padding: 6px 12px; max-width: 300px">{{ player.injuryNote }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p style="color: #888">No current injuries</p>
-            {% endif %}
+        <div class="pred-container">
+            <p>Utah Win Probability: {{ win_probability }}%</p>
+            <p>Predicted Score: {{ predicted_score }}</p>
         </div>
-        <div id="utah_goals_graph"></div>
-        <div id="opponent_goals_graph"></div>
-        <div id="utah_performance_graph"></div>
-        <div id="opponent_performance_graph"></div>
+        <div class="grid-container">
+            <div id="utah_injured_players" style="margin: 20px 0">
+                <h2 style="color: #7ab3e2">Utah Injuries ({{ total_utah_injured_players }})</h2>
+                {% if utah_injured_players %}
+                    <table style="width: 100%;
+                                  border-collapse: collapse;
+                                  background: #1a1a2e;
+                                  color: #e0e0e0;
+                                  font-size: 0.85rem">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #7ab3e2">
+                                <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Player</th>
+                                <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Date</th>
+                                <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in utah_injured_players %}
+                                <tr style="border-bottom: 1px solid #2a2a4a">
+                                    <td style="padding: 6px 12px">{{ player.player }}</td>
+                                    <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryDate }}</td>
+                                    <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryType }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% for player in utah_injured_players %}
+                        <div class="injury-update-container">
+                            <h4>{{ player.player }} Injury Update:</h4>
+                            <p>{{ player.injuryNote }}</p>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #888">No current injuries</p>
+                {% endif %}
+            </div>
+            <div id="opponent_injured_players" style="margin: 20px 0">
+                <h2 style="color: #de1a24">
+                    {{ opponent_abbreviation }} Injuries
+                    ({{ total_opponent_injured_players }})
+                </h2>
+                {% if opponent_injured_players %}
+                    <table style="width: 100%;
+                                  border-collapse: collapse;
+                                  background: #1a1a2e;
+                                  color: #e0e0e0;
+                                  font-size: 0.85rem">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #de1a24">
+                                <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Player</th>
+                                <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Date</th>
+                                <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in opponent_injured_players %}
+                                <tr style="border-bottom: 1px solid #2a2a4a">
+                                    <td style="padding: 6px 12px">{{ player.player }}</td>
+                                    <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryDate }}</td>
+                                    <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryType }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% for player in opponent_injured_players %}
+                        <div class="injury-update-container">
+                            <h4>{{ player.player }} Injury Update:</h4>
+                            <p>{{ player.injuryNote }}</p>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #888">No current injuries</p>
+                {% endif %}
+            </div>
+            <div id="utah_goals_graph"></div>
+            <div id="opponent_goals_graph"></div>
+            <div id="utah_performance_graph"></div>
+            <div id="opponent_performance_graph"></div>
+        </div>
+        <div class="performance-explanation">
+            <h3>How We Predict the Winner</h3>
+            <p class="perf-intro">Each of the last 8 games is scored 0–1 using a weighted blend of key stats:</p>
+            <div class="perf-grid">
+                <div class="perf-category">
+                    <span class="perf-label">Goaltending: <strong>25%</strong></span>
+                    <span class="perf-desc">Save percentage (normalized .850–.960)</span>
+                </div>
+                <div class="perf-category">
+                    <span class="perf-label">Shooting: <strong>25%</strong></span>
+                    <span class="perf-desc">Shooting percentage (normalized 5%–20%)</span>
+                </div>
+                <div class="perf-category">
+                    <span class="perf-label">Power Play: <strong>12.5%</strong></span>
+                    <span class="perf-desc">PP goals scored minus PP goals allowed</span>
+                </div>
+                <div class="perf-category">
+                    <span class="perf-label">Penalty Kill: <strong>12.5%</strong></span>
+                    <span class="perf-desc">Shorthanded goals scored minus allowed</span>
+                </div>
+                <div class="perf-category">
+                    <span class="perf-label">Faceoffs: <strong>8%</strong></span>
+                    <span class="perf-desc">Faceoff win % (normalized 35%–65%)</span>
+                </div>
+                <div class="perf-category">
+                    <span class="perf-label">Puck Control: <strong>7%</strong></span>
+                    <span class="perf-desc">Takeaways minus giveaways</span>
+                </div>
+                <div class="perf-category">
+                    <span class="perf-label">Discipline: <strong>7%</strong></span>
+                    <span class="perf-desc">Fewer penalty minutes than opponent is better</span>
+                </div>
+                <div class="perf-category">
+                    <span class="perf-label">Physicality: <strong>3%</strong></span>
+                    <span class="perf-desc">Hits delivered minus hits taken</span>
+                </div>
+            </div>
+            <div class="perf-pipeline">
+                <div class="perf-step">
+                    <span class="step-num">1</span>
+                    <p>
+                        Each game gets a score. The 8 scores are then combined using recency weighting. The most recent game counts for 25% of the total, tapering to 4% for the oldest.
+                    </p>
+                </div>
+                <div class="perf-step">
+                    <span class="step-num">2</span>
+                    <p>
+                        That weighted score is blended with zone time data (how much time each team spends in the offensive zone vs. league average), which accounts for 8% of the final performance score.
+                    </p>
+                </div>
+                <div class="perf-step">
+                    <span class="step-num">3</span>
+                    <p>
+                        Each team's performance score is combined 50/50 with their win rate over the last 8 games. The result is run through a curve to sharpen separation between teams, and a +4% home ice bonus is applied if Utah is the home team.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <footer class="site-footer">
+            NHL data sourced from <a href="https://github.com/Zmalski/NHL-API-Reference" target="_blank">NHL-API-Reference</a>
+            &nbsp;·&nbsp;
+            Injury data sourced from <a href="https://www.hockey-reference.com" target="_blank">hockey-reference.com</a>
+        </footer>
     </body>
     <script>
         var utah_data = {{ utah_goals_graph | safe }};
         var opponent_data = {{ opponent_goals_graph | safe }};
-        Plotly.newPlot('utah_goals_graph', utah_data.data, utah_data.layout);
-        Plotly.newPlot('opponent_goals_graph', opponent_data.data, opponent_data.layout);
+        Plotly.newPlot('utah_goals_graph', utah_data.data, utah_data.layout, { responsive: true });
+        Plotly.newPlot('opponent_goals_graph', opponent_data.data, opponent_data.layout, { responsive: true });
         var utah_performance_data = {{ utah_performance_graph | safe }};
         var opponent_performance_data = {{ opponent_performance_graph | safe }};
-        Plotly.newPlot('utah_performance_graph', utah_performance_data.data, utah_performance_data.layout);
-        Plotly.newPlot('opponent_performance_graph', opponent_performance_data.data, opponent_performance_data.layout);
+        Plotly.newPlot('utah_performance_graph', utah_performance_data.data, utah_performance_data.layout, { responsive: true });
+        Plotly.newPlot('opponent_performance_graph', opponent_performance_data.data, opponent_performance_data.layout, { responsive: true });
     </script>
 </html>

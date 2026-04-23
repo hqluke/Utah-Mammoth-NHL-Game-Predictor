@@ -25,8 +25,8 @@ class GamePrediction(models.Model):
         Game, on_delete=models.CASCADE, related_name="prediction"
     )
     utah_win_pct = models.FloatField()
-    predicted_home_score = models.IntegerField(null=True)
-    predicted_away_score = models.IntegerField(null=True)
+    predicted_home_score = models.FloatField(null=True, blank=True)
+    predicted_away_score = models.FloatField(null=True, blank=True)
     utah_won = models.BooleanField(null=True)  # null until game finishes
     prediction_correct = models.BooleanField(null=True)
     # stores the entire data object from the NHL API
