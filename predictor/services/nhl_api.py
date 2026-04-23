@@ -20,6 +20,41 @@ if CURRENT_YEAR <= OTHER_YEAR:
 else:
     CURRENT_SEASON = str(OTHER_YEAR) + str(CURRENT_YEAR)
 
+NHL_TO_HR_ABBREV = {
+    "UTA": "UTA",
+    "VGK": "VEG",  # crazy that this is literally the only different one and this is the team utah is against in the playoffs. woulda never caught this ever.
+    "ANA": "ANA",
+    "BOS": "BOS",
+    "BUF": "BUF",
+    "CAR": "CAR",
+    "CBJ": "CBJ",
+    "CGY": "CGY",
+    "CHI": "CHI",
+    "COL": "COL",
+    "DAL": "DAL",
+    "DET": "DET",
+    "EDM": "EDM",
+    "FLA": "FLA",
+    "LAK": "LAK",
+    "MIN": "MIN",
+    "MTL": "MTL",
+    "NJD": "NJD",
+    "NSH": "NSH",
+    "NYI": "NYI",
+    "NYR": "NYR",
+    "OTT": "OTT",
+    "PHI": "PHI",
+    "PIT": "PIT",
+    "SEA": "SEA",
+    "SJS": "SJS",
+    "STL": "STL",
+    "TBL": "TBL",
+    "TOR": "TOR",
+    "VAN": "VAN",
+    "WPG": "WPG",
+    "WSH": "WSH",
+}
+
 
 def get_next_game():
     url = "https://api-web.nhle.com/v1/club-schedule/UTA/week/now"
@@ -43,7 +78,8 @@ def get_next_teams(game):
 
 
 def get_injured_players(team_abbrev):
-    url = f"https://www.hockey-reference.com/teams/{team_abbrev}/{CURRENT_YEAR}.html"
+    hr_abbrev = NHL_TO_HR_ABBREV.get(team_abbrev, team_abbrev)
+    url = f"https://www.hockey-reference.com/teams/{hr_abbrev}/{CURRENT_YEAR}.html"
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
@@ -196,6 +232,23 @@ def get_zone_stats(team_id, season=CURRENT_SEASON, game_type=GAME_TYPE):
     return stats
 
 
+def get_team_record(team_abbrev):
+    url = "https://api-web.nhle.com/v1/standings/now"
+    response = requests.get(url)
+    standings = response.json()["standings"]
+    record = ""
+    for team in standings:
+        if team["teamAbbrev"]["default"] == team_abbrev:
+            record = (
+                str(team["wins"])
+                + "-"
+                + str(team["losses"])
+                + "-"
+                + str(team["otLosses"])
+            )
+            return record
+
+
 # future links:
 # Retrieve NHL Edge data for the specified player, Includes skating distance and speed data, shot location and speed data, zone time details and zone starts.
 # comparison/playerId/season/game-type
@@ -218,6 +271,9 @@ def get_all_info():
     opponent_id = opponent["id"]
     utah_is_home = game["homeTeam"]["id"] == 68
 
+    utah_record = get_team_record(utah_abbreviation)
+    opponent_record = get_team_record(opponent_abbreviation)
+
     utah_prev = prev_games(utah_abbreviation)
     opponent_prev = prev_games(opponent_abbreviation)
 
@@ -229,9 +285,9 @@ def get_all_info():
         for k, v in opponent_prev.items()
     }
 
-    utah_average_score = sum(v["goals_scored"] for v in utah_game_output.values()) / len(
-        utah_game_output
-    )
+    utah_average_score = sum(
+        v["goals_scored"] for v in utah_game_output.values()
+    ) / len(utah_game_output)
     opponent_average_score = sum(
         v["goals_scored"] for v in opponent_game_output.values()
     ) / len(opponent_game_output)
@@ -266,6 +322,38 @@ def get_all_info():
         utah_blended, opponent_blended, utah_is_home, utah_win_rate, opponent_win_rate
     )
 
+    utah_game_ratings = []
+    for score in utah_scores:
+        if score >= 0.5:
+            rating = "good"
+        elif score >= 0.3:
+            rating = "average"
+        else:
+            rating = "poor"
+        utah_game_ratings.append(
+            {
+                "score": round(score, 3),
+                "rating": rating,
+                "vs_average": round((score - 0.5) * 100, 1),  # % above/below average
+            }
+        )
+
+    opponent_game_ratings = []
+    for score in opponent_scores:
+        if score >= 0.5:
+            rating = "good"
+        elif score >= 0.3:
+            rating = "average"
+        else:
+            rating = "poor"
+        opponent_game_ratings.append(
+            {
+                "score": round(score, 3),
+                "rating": rating,
+                "vs_average": round((score - 0.5) * 100, 1),  # % above/below average
+            }
+        )
+
     return {
         "game": game,
         "utah": utah,
@@ -279,6 +367,10 @@ def get_all_info():
         "utah_zone": utah_zone,
         "opponent_zone": opponent_zone,
         "predicted_score": predicted_score,
+        "utah_game_ratings": utah_game_ratings,
+        "opponent_game_ratings": opponent_game_ratings,
+        "utah_record": utah_record,
+        "opponent_record": opponent_record,
     }
 
 
@@ -308,6 +400,7 @@ if __name__ == "__main__":
 
     game = get_next_game()
     utah, opponent = get_next_teams(game)
+    print(json.dumps(game, indent=2))
     # print(json.dumps([utah, opponent], indent=2))
 
     utah_abbreviation = utah["abbrev"]
@@ -316,15 +409,18 @@ if __name__ == "__main__":
     opponent_id = opponent["id"]
     # print(f"OPPONENT ID: {opponent_id}")
     # print(f"UTAH: {utah_abbreviation}")
-    # print(json.dumps([utahAbbreviation, opponentAbbreviation], indent=2))
+    # print(json.dumps([utah_abbreviation, opponent_abbreviation], indent=2))
 
     # utah_injured_players = get_injured_players(utah_abbreviation)
     # opponent_injured_players = get_injured_players(opponent_abbreviation)
-    # print(json.dumps([utah_injured_players, opponent_injured_players], indent=2))
+    # print("UTAH INJURED PLAYERS:")
+    # print(json.dumps([utah_injured_players], indent=2))
+    # print("OPPONENT INJURED PLAYERS:")
+    # print(json.dumps([opponent_injured_players], indent=2))
 
     utah_prev_games = prev_games(utah_abbreviation)
     opponent_prev_games = prev_games(opponent_abbreviation)
-    print(json.dumps([utah_prev_games], indent=2))
+    # print(json.dumps([utah_prev_games], indent=2))
 
     # first_game = list(utah_prev_five_games.values())[0]
     # utah_stats = get_stats_from_game(first_game, utah_abbreviation)
@@ -339,24 +435,24 @@ if __name__ == "__main__":
         opponent_game_output[k] = get_stats_from_game(v, opponent_abbreviation)
 
     # print("UTAH")
-    print(json.dumps(utah_game_output, indent=2))
+    # print(json.dumps(utah_game_output, indent=2))
     # print(opponent_abbreviation)
-    print(json.dumps(opponent_game_output, indent=2))
+    # print(json.dumps(opponent_game_output, indent=2))
 
     utah_zone = get_zone_stats(utah_id)
     opponent_zone = get_zone_stats(opponent_id)
-    print(json.dumps(utah_zone, indent=2))
-    print(json.dumps(opponent_zone, indent=2))
+    # print(json.dumps(utah_zone, indent=2))
+    # print(json.dumps(opponent_zone, indent=2))
 
     utah_weighted_scores = []
     for k, v in utah_game_output.items():
         utah_weighted_scores.append(weigh_game(v))
-    print(utah_weighted_scores)
+    # print(utah_weighted_scores)
 
     opponent_weighted_scores = []
     for k, v in opponent_game_output.items():
         opponent_weighted_scores.append(weigh_game(v))
-    print(opponent_weighted_scores)
+    # print(opponent_weighted_scores)
 
     utah_average_weighted_score = average_weighted_score(utah_weighted_scores)
     print(utah_average_weighted_score)
@@ -365,12 +461,12 @@ if __name__ == "__main__":
     print(opponent_average_weighted_score)
 
     utah_blended_zone_time = blend_zone_time(utah_average_weighted_score, utah_zone)
-    print(utah_blended_zone_time)
+    # print(utah_blended_zone_time)
 
     opponent_blended_zone_time = blend_zone_time(
         opponent_average_weighted_score, opponent_zone
     )
-    print(opponent_blended_zone_time)
+    # print(opponent_blended_zone_time)
 
     utah_is_home = game["homeTeam"]["id"] == 68
 

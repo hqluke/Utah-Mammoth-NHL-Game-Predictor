@@ -1,4 +1,5 @@
-<!doctype html>
+{% load static %}
+<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -6,17 +7,97 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Mammoth Odds</title>
         <script src="https://cdn.plot.ly/plotly-2.14.0.min.js"></script>
+        <link rel="stylesheet" href="{% static 'index.css' %}" />
     </head>
     <body>
         <h1>Mammoth Odds</h1>
+        <h1>{{ utah_name }} vs. {{ opponent_name }}</h1>
+        <p>Utah Record: {{ utah_record }}</p>
+        <p>Opponent Record: {{ opponent_record }}</p>
+        <img src="{{ utah_dark_logo }}" alt="{{ utah_name }} logo" />
+        <img src="{{ opponent_dark_logo }}" alt="{{ opponent_name }} logo" />
+        <p>Utah Win Probability: {{ win_probability }}%</p>
         <p>Predicted Score: {{ predicted_score }}</p>
+        <p>Venue: {{ venue }}</p>
+        <p>Start Time: {{ start_time }}</p>
+        <div id="utah_injured_players" style="margin: 20px 0">
+            <h2 style="color: #7ab3e2">Utah Injuries ({{ total_utah_injured_players }})</h2>
+            {% if utah_injured_players %}
+                <table style="width: 100%;
+                              border-collapse: collapse;
+                              background: #1a1a2e;
+                              color: #e0e0e0;
+                              font-size: 0.85rem">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #7ab3e2">
+                            <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Player</th>
+                            <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Date</th>
+                            <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Type</th>
+                            <th style=" padding: 8px 12px; text-align: left; color: #7ab3e2; ">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in utah_injured_players %}
+                            <tr style="border-bottom: 1px solid #2a2a4a">
+                                <td style="padding: 6px 12px">{{ player.player }}</td>
+                                <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryDate }}</td>
+                                <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryType }}</td>
+                                <td style="padding: 6px 12px; max-width: 300px">{{ player.injuryNote }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="color: #888">No current injuries</p>
+            {% endif %}
+        </div>
+        <div id="opponent_injured_players" style="margin: 20px 0">
+            <h2 style="color: #de1a24">
+                {{ opponent_abbreviation }} Injuries
+                ({{ total_opponent_injured_players }})
+            </h2>
+            {% if opponent_injured_players %}
+                <table style="width: 100%;
+                              border-collapse: collapse;
+                              background: #1a1a2e;
+                              color: #e0e0e0;
+                              font-size: 0.85rem">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #de1a24">
+                            <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Player</th>
+                            <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Date</th>
+                            <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Type</th>
+                            <th style=" padding: 8px 12px; text-align: left; color: #de1a24; ">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in opponent_injured_players %}
+                            <tr style="border-bottom: 1px solid #2a2a4a">
+                                <td style="padding: 6px 12px">{{ player.player }}</td>
+                                <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryDate }}</td>
+                                <td style="padding: 6px 12px; white-space: nowrap">{{ player.injuryType }}</td>
+                                <td style="padding: 6px 12px; max-width: 300px">{{ player.injuryNote }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="color: #888">No current injuries</p>
+            {% endif %}
+        </div>
         <div id="utah_goals_graph"></div>
         <div id="opponent_goals_graph"></div>
+        <div id="utah_performance_graph"></div>
+        <div id="opponent_performance_graph"></div>
     </body>
     <script>
         var utah_data = {{ utah_goals_graph | safe }};
         var opponent_data = {{ opponent_goals_graph | safe }};
         Plotly.newPlot('utah_goals_graph', utah_data.data, utah_data.layout);
         Plotly.newPlot('opponent_goals_graph', opponent_data.data, opponent_data.layout);
+        var utah_performance_data = {{ utah_performance_graph | safe }};
+        var opponent_performance_data = {{ opponent_performance_graph | safe }};
+        Plotly.newPlot('utah_performance_graph', utah_performance_data.data, utah_performance_data.layout);
+        Plotly.newPlot('opponent_performance_graph', opponent_performance_data.data, opponent_performance_data.layout);
     </script>
 </html>
