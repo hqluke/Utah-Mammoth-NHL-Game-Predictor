@@ -3,12 +3,24 @@ from predictor.services import graph_builder
 from predictor.services import nhl_api
 from datetime import datetime
 from zoneinfo import ZoneInfo
-
-# Create your views here.
+from predictor.models import Game, GamePrediction, Team
 
 
 def index(request):
-    data = nhl_api.get_all_info()
+    game = nhl_api.get_next_game()
+    game_id = game["id"]
+
+    # get from DB if it exists
+    try:
+        stored = GamePrediction.objects.select_related("game").get(
+            game__game_id=game_id
+        )
+        data = stored.cached_data
+    # or fetch data and store
+    except GamePrediction.DoesNotExist:
+        data = nhl_api.get_all_info()
+        _store_prediction(game_id, data)
+
     utah_abbreviation = data["utah"]["abbrev"]
     opponent_abbreviation = data["opponent"]["abbrev"]
 
@@ -80,6 +92,47 @@ def index(request):
             "start_time": start_time,
             "utah_record": utah_record,
             "opponent_record": opponent_record,
+        },
+    )
+
+
+def _store_prediction(game_id, data):
+    # get or create teams
+    utah_data = data["utah"]
+    opponent_data = data["opponent"]
+
+    utah_team, _ = Team.objects.get_or_create(
+        team_id=utah_data["id"],
+        defaults={
+            "name": utah_data["commonName"]["default"],
+            "abbreviation": utah_data["abbrev"],
+            "logo_url": utah_data["darkLogo"],
+        },
+    )
+    opponent_team, _ = Team.objects.get_or_create(
+        team_id=opponent_data["id"],
+        defaults={
+            "name": opponent_data["commonName"]["default"],
+            "abbreviation": opponent_data["abbrev"],
+            "logo_url": opponent_data["darkLogo"],
+        },
+    )
+
+    game_obj, _ = Game.objects.get_or_create(
+        game_id=game_id,
+        defaults={
+            "home_team": utah_team if data["utah_is_home"] else opponent_team,
+            "away_team": opponent_team if data["utah_is_home"] else utah_team,
+            "game_date": data["game"]["startTimeUTC"],
+            "completed": False,
+        },
+    )
+
+    GamePrediction.objects.update_or_create(
+        game=game_obj,
+        defaults={
+            "utah_win_pct": data["utah_win_probability"],
+            "cached_data": data,
         },
     )
 

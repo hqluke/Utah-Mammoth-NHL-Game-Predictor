@@ -265,6 +265,8 @@ def get_all_info():
     game = get_next_game()
     utah, opponent = get_next_teams(game)
 
+    game_id = game["id"]
+
     utah_abbreviation = utah["abbrev"]
     opponent_abbreviation = opponent["abbrev"]
     utah_id = utah["id"]
@@ -356,6 +358,7 @@ def get_all_info():
 
     return {
         "game": game,
+        "game_id": game_id,
         "utah": utah,
         "opponent": opponent,
         "utah_is_home": utah_is_home,

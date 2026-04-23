@@ -1,9 +1,74 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
 img {
     height: auto;
-    width: 200px;
+    width: 150px;
 }
 
 body {
     background-color: #1a1a2e;
     color: #e0e0e0;
+}
+
+.header {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    font-size: 0.6rem;
+    background-color: #444444;
+    color: #e0e0e0;
+    box-shadow: 0 0 10px #222222;
+}
+
+.header h1 {
+    margin-left: 2rem;
+}
+
+.title-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 3rem;
+    margin-bottom: 1.2rem;
+    width: 100%;
+}
+
+.title-container h1 {
+    margin: 0 auto;
+}
+
+.logo-record-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 800px;
+    margin: 0 auto;
+    gap: 4rem;
+}
+
+.utah-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.opponent-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.top-text {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10px;
+    font-size: 1.5rem;
 }

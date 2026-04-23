@@ -10,16 +10,30 @@
         <link rel="stylesheet" href="{% static 'index.css' %}" />
     </head>
     <body>
-        <h1>Mammoth Odds</h1>
-        <h1>{{ utah_name }} vs. {{ opponent_name }}</h1>
-        <p>Utah Record: {{ utah_record }}</p>
-        <p>Opponent Record: {{ opponent_record }}</p>
-        <img src="{{ utah_dark_logo }}" alt="{{ utah_name }} logo" />
-        <img src="{{ opponent_dark_logo }}" alt="{{ opponent_name }} logo" />
+        <div class="header">
+            <h1>Mammoth Odds</h1>
+        </div>
+        <div class="title-container">
+            <h1>{{ utah_name }} vs. {{ opponent_name }}</h1>
+        </div>
+        <div class="logo-record-container">
+            <div class="utah-top">
+                <img src="{{ utah_dark_logo }}" alt="{{ utah_name }} logo" />
+                <p>Utah Record: {{ utah_record }}</p>
+            </div>
+            <div class="top-text">
+                <p>VS.</p>
+            </div>
+            <div class="opponent-top">
+                <img src="{{ opponent_dark_logo }}" alt="{{ opponent_name }} logo" />
+                <p>Opponent Record: {{ opponent_record }}</p>
+            </div>
+        </div>
         <p>Utah Win Probability: {{ win_probability }}%</p>
         <p>Predicted Score: {{ predicted_score }}</p>
         <p>Venue: {{ venue }}</p>
         <p>Start Time: {{ start_time }}</p>
+        <p>Start Date: {{ start_date }}</p>
         <div id="utah_injured_players" style="margin: 20px 0">
             <h2 style="color: #7ab3e2">Utah Injuries ({{ total_utah_injured_players }})</h2>
             {% if utah_injured_players %}

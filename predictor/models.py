@@ -29,3 +29,6 @@ class GamePrediction(models.Model):
     predicted_away_score = models.IntegerField(null=True)
     utah_won = models.BooleanField(null=True)  # null until game finishes
     prediction_correct = models.BooleanField(null=True)
+    # stores the entire data object from the NHL API
+    cached_data = models.JSONField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
