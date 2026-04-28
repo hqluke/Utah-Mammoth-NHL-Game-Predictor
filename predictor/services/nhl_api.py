@@ -194,15 +194,15 @@ def get_stats_from_game(game_id, team_abbrev):
     positions = [defense, forwards]
     for position in positions:
         for player in position:
-            if player["giveaways"] > 0:
+            if player.get("giveaways", 0) > 0:
                 output["giveaways"] = player["giveaways"] + output.get("giveaways", 0)
-            if player["takeaways"] > 0:
+            if player.get("takeaways", 0) > 0:
                 output["takeaways"] = player["takeaways"] + output.get("takeaways", 0)
-            if player["faceoffWinningPctg"] > 0:
+            if player.get("faceoffWinningPctg", 0) > 0:
                 faceoffs.append(player["faceoffWinningPctg"])
-            if player["hits"] > 0:
+            if player.get("hits", 0) > 0:
                 output["hits"] = player["hits"] + output.get("hits", 0)
-            if player["pim"] > 0:
+            if player.get("pim", 0) > 0:
                 output["penalty_minutes"] = player["pim"] + output.get(
                     "penalty_minutes", 0
                 )
@@ -211,14 +211,14 @@ def get_stats_from_game(game_id, team_abbrev):
     other_positions = [other_defense, other_forwards]
     for position in other_positions:
         for player in position:
-            if player["hits"] > 0:
+            if player.get("hits", 0) > 0:
                 output["hits_taken"] = player["hits"] + output.get("hits_taken", 0)
-            if player["pim"] > 0:
+            if player.get("pim", 0) > 0:
                 output["opponent_penalty_minutes"] = player["pim"] + output.get(
                     "opponent_penalty_minutes", 0
                 )
 
-    output["face_off_win_pctg"] = sum(faceoffs) / len(faceoffs)
+    output["face_off_win_pctg"] = sum(faceoffs) / len(faceoffs) if faceoffs else 0
     output["face_off_win_pctg"] = round(output["face_off_win_pctg"], 3)
     return output
 
